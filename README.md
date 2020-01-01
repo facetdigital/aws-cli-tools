@@ -22,3 +22,12 @@ Using the `run` script, all commands are run inside a Docker container, which ha
 ./run exec <bash command> # Run arbitrary command line inside a container
 ./run bash                # Run bash inside container for interactive use
 ```
+
+## Examples
+
+#### Dump your entire Route53 Hosted Zone Configuration
+Useful for backups, and other export operations.
+
+```
+./run route53:dump-zone <hosted-zone-id>
+```
