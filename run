@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+
+#------------------------------------------------------------------------------
+# This script is a common utility for running various commands on this
+# repository in a development environment, including setup tasks for a new
+# development environment, and tasks that wrap docker and docker-compose to run
+# the service, its dependencies, and other management scripts inside containers.
+#
+# See the USAGE message below for commands.
+#------------------------------------------------------------------------------
+
+set -e
+
+############################################################
+# Config
+############################################################
+DOCKER_IMAGE_NAME="facetdigital/aws-cli-tools"
+
+DOCKER_BUILD_CMD="docker build . -t $DOCKER_IMAGE_NAME"
+DOCKER_RUN_CMD="docker run -it --rm -v $(pwd)/app:/app -v $(pwd)/.aws:/root/.aws"
+
+############################################################
+# Usage
+############################################################
+if [[ $# -lt 1 ]]; then
+    echo
+    echo "USAGE: ./run.sh [COMMAND]"
+    echo
+    echo "Commands:"
+    echo "  setup - Setup the initial dev env by building the necessary"
+    echo "          Docker container."
+    echo
+    echo "  route53:dump-zone <HostedZoneID>"
+    echo "    Dumps JSON data for all DNS records in a Hosted Zone."
+    echo
+    echo "  exec - Run a one-off command in a container."
+    echo
+    echo "  shell - Run a bash shell in a container."
+    echo
+    echo "######################################################################"
+    echo "NOTE: This script requires that you have Docker installed."
+    echo "######################################################################"
+    echo
+    exit
+fi
+
+
+############################################################
+# Main Script
+############################################################
+while [[ $# -gt 0 ]]; do
+    param="$1"
+    shift
+    case "$param" in
+        setup)
+            echo
+            echo "######################################################################"
+            echo "# Building '$DOCKER_IMAGE_NAME' Docker image..."
+            echo "######################################################################"
+            echo
+            $DOCKER_BUILD_CMD
+            break
+            ;;
+
+        route53:dump-zone)
+            zone_id="$1"
+            shift
+            $DOCKER_RUN_CMD $DOCKER_IMAGE_NAME aws route53 list-resource-record-sets --hosted-zone-id $zone_id
+            ;;
+
+        exec)
+            $DOCKER_RUN_CMD $DOCKER_IMAGE_NAME $@
+            break
+            ;;
+
+        execd)
+            $DOCKER_RUND_CMD $DOCKER_IMAGE_NAME $@
+            break
+            ;;
+
+        shell|bash)
+            $DOCKER_RUN_CMD $DOCKER_IMAGE_NAME bash
+            break
+            ;;
+
+        *)
+            echo "Unknown command: $param"
+            break
+            ;;
+    esac
+done
